@@ -83,6 +83,14 @@ impl<T: RuntimeType> Array<T> {
         std::mem::forget(self);
         abi
     }
+
+    pub unsafe fn from_mut_abi<'a>(data: *mut *mut T::Abi, len: *mut u32) -> ArrayProxy<T> {
+        ArrayProxy {
+            data,
+            len,
+            array: Array::new()
+        }
+    }
 }
 
 impl<T: RuntimeType> std::ops::Deref for Array<T> {
@@ -113,6 +121,29 @@ impl<T: RuntimeType> Drop for Array<T> {
     }
 }
 
+pub struct ArrayProxy<T: RuntimeType> {
+    data: *mut *mut T::Abi,
+    len: *mut u32,
+    array: Array<T>,
+}
+
+impl<T: RuntimeType> ArrayProxy<T> {
+    pub fn deref_mut(&mut self) -> &mut Array<T> {
+        &mut self.array
+    }
+}
+
+impl<T: RuntimeType> Drop for ArrayProxy<T> {
+    fn drop(&mut self) {
+        unsafe {
+            *self.data = self.array.data as *mut _;
+            *self.len = self.array.len
+        }
+
+        std::mem::forget(self);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -132,5 +163,31 @@ mod tests {
         assert!(empty[0] == 0);
         assert!(empty[1] == 0);
         assert!(empty[2] == 0);
+    }
+
+    fn proxy_test(array: &mut Array<i32>) {
+        *array = Array::<i32>::with_len(3);
+        array[0] = 1;
+        array[1] = 2;
+        array[2] = 3;
+    }
+
+    #[test]
+    fn proxy() {
+        let mut data: *mut i32 = std::ptr::null_mut();
+        let mut len: u32 = 0;
+
+        unsafe {
+            proxy_test(Array::<i32>::from_mut_abi(&mut data, &mut len).deref_mut());
+
+            let mut array = Array::<i32>::new();
+            *array.set_abi() = data;
+            *array.set_abi_len() = len;
+
+            assert_eq!(array.len(), 3);
+            assert_eq!(array[0], 1);
+            assert_eq!(array[1], 2);
+            assert_eq!(array[2], 3);
+        }
     }
 }
