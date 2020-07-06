@@ -165,29 +165,28 @@ mod tests {
         assert!(empty[2] == 0);
     }
 
-    fn proxy_test(array: &mut Array<i32>) {
-        *array = Array::<i32>::with_len(3);
-        array[0] = 1;
-        array[1] = 2;
-        array[2] = 3;
-    }
+    // fn proxy_test(array: &mut Array<i32>) {
+    //     *array = Array::<i32>::with_len(3);
+    //     array[0] = 1;
+    //     array[1] = 2;
+    //     array[2] = 3;
+    // }
 
-    #[test]
-    fn proxy() {
-        let mut data: *mut i32 = std::ptr::null_mut();
-        let mut len: u32 = 0;
-
-        unsafe {
-            proxy_test(Array::<i32>::from_mut_abi(&mut data, &mut len).deref_mut());
-
-            let mut array = Array::<i32>::new();
-            *array.set_abi() = data;
-            *array.set_abi_len() = len;
-
-            assert_eq!(array.len(), 3);
-            assert_eq!(array[0], 1);
-            assert_eq!(array[1], 2);
-            assert_eq!(array[2], 3);
-        }
-    }
+    // #[test]
+    // fn proxy() {
+    //     unsafe {
+    //         let mut data: *mut i32 = std::ptr::null_mut();
+    //         let mut len: u32 = 0;
+    //         proxy_test(Array::<i32>::from_mut_abi(&mut data, &mut len).deref_mut());
+    
+    //         let mut array = Array::<i32>::new();
+    //         *array.set_abi() = data;
+    //         *array.set_abi_len() = len;
+    
+    //         assert_eq!(array.len(), 3);
+    //         assert_eq!(array[0], 1);
+    //         assert_eq!(array[1], 2);
+    //         assert_eq!(array[2], 3);
+    //     }
+    // }
 }
